@@ -54,7 +54,8 @@ int main(int argc,char *argv[])
 
         if(read_and_validate_encode_args_d(argv,&decInfo) == e_success)
         {
-            do_decoding(&decInfo);
+            if(do_decoding(&decInfo) == e_failure)
+            printf("Decoding failed!\n");;
         }
         else
         {

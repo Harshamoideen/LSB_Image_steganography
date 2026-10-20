@@ -3,6 +3,7 @@
 #include "types.h"
 #include "common.h"
 #include "decode.h"
+#include "encode.h"
 
 /*
  * Validate the command line for decoding:
@@ -24,12 +25,24 @@ Status read_and_validate_encode_args_d(char *argv[], DecodeInfo *decInfo){
 
 
 	/*strtok to remove the extention*/
-	if(argv[3] != NULL){
-		strcpy(decInfo->output_fname ,strtok(argv[3],"."));
+	if (argv[3] != NULL)
+	{
+		size_t len = strcspn(argv[3], ".");
+
+		if (len >= sizeof(decInfo->output_fname))
+		{
+			printf("Error: output file name overflow.\n");
+			return e_failure;
+		}
+
+		strncpy(decInfo->output_fname, argv[3], len);
+		decInfo->output_fname[len] = '\0';
 	}
-	else{
-		strcpy(decInfo->output_fname,"output");
+	else
+	{
+		strcpy(decInfo->output_fname, "output");
 	}
+
 	return e_success;
 }
 
@@ -48,7 +61,7 @@ Status open_files1(char *filename, FILE **fptr, char *mode)
 	if (*fptr == NULL)
 	{
 		perror("fopen");
-		fprintf(stderr, "ERROR: Unable to open file %s\n", filename);
+		fprintf(stderr, "Error: Unable to open file %s\n", filename);
 
 		return e_failure;
 	}
@@ -137,7 +150,6 @@ Status decode_file_extn(unsigned int extn_len, DecodeInfo *decInfo){
 
 	if (decode_data_from_image(decInfo->extn_secret_file,extn_len, decInfo) == e_failure)
 	{
-		printf("Error: could not read file extension\n");
 		return e_failure;
 	}
 	strcat(decInfo->output_fname,".");
@@ -156,7 +168,6 @@ Status decode_magic_string(char *magic_string,DecodeInfo *decInfo)
 	if(decode_data_from_image(decoded,strlen(MAGIC_STRING),decInfo) == e_failure)
 		return e_failure;
 	if(strcmp(decoded,magic_string) !=0){
-		printf("Error: magic string mismatch, not stego image\n");
 		return e_failure;
 	}
 
@@ -217,7 +228,6 @@ Status do_decoding(DecodeInfo *decInfo)
 
 	if(decode_file_extn(extn_len,decInfo) == e_failure)
 	{
-
 		printf("Error: Unable to decode the secret file extension.\n");
 		return e_failure;
 	}
@@ -246,5 +256,7 @@ Status do_decoding(DecodeInfo *decInfo)
 	printf("\n===============================================\n");
 	printf("        Decoding completed successfully!\n");
 	printf("===============================================\n");
+	fclose(decInfo->fptr_output);
+	fclose(decInfo->fptr_stego_image);
 	return e_success;
 }

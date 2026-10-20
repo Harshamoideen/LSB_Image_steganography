@@ -48,6 +48,11 @@ Status read_and_validate_encode_args_e(char *argv[], EncodeInfo *encInfo)
 	/* optional output image name, default "stego.bmp" */
 	if(argv[4]!=NULL)
 	{
+		
+		if(argv[4] == encInfo->src_image_fname){
+			printf("output file and source image file can't be same.\n");
+			return e_failure;
+		}
 		if(strlen(argv[4]) <=4 && strchr(argv[4],'.') != NULL)
 		{
 			printf("Error: output filename must contain a name before the extension\n");
@@ -228,6 +233,11 @@ Status encode_magic_string( char *magic_string, EncodeInfo *encInfo)
 Status encode_secret_file_extn(char *file_extn, EncodeInfo *encInfo)
 {
 	int length = strlen(file_extn);
+	if(length > MAX_FILE_SUFFIX)
+	{
+      printf("Error: exceeded the maximum file extension length.\n");
+	  return e_failure;
+	}
 	encode_data_int_to_image(length,encInfo->fptr_src_image,encInfo->fptr_stego_image);
 	encode_data_to_image(file_extn,length,encInfo->fptr_src_image,encInfo->fptr_stego_image);
 
@@ -406,6 +416,9 @@ Status do_encoding(EncodeInfo *encInfo)
 	printf("\n===============================================\n");
 	printf("        Encoding completed successfully!\n");
 	printf("===============================================\n");
+	fclose(encInfo->fptr_secret);
+	fclose(encInfo->fptr_src_image);
+	fclose(encInfo->fptr_stego_image);
 	return e_success;
 
 }
